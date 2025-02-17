@@ -1,5 +1,6 @@
 from velocityai.core.agent import Agent
 from velocityai.llms.base import BaseLLM
+import hashlib
 
 class WriterAgent(Agent):
     """Example agent specialized in academic writing and thesis composition."""
@@ -10,9 +11,17 @@ class WriterAgent(Agent):
             name="Academic Writer",
             description="Specialized in academic writing and thesis composition"
         )
+        self.cache = {}
+    
+    def _generate_cache_key(self, *args) -> str:
+        """Generate a unique cache key based on input arguments."""
+        return hashlib.md5("".join(args).encode()).hexdigest()
     
     async def outline_section(self, topic: str, research_findings: str) -> str:
         """Create an outline for a thesis section."""
+        cache_key = self._generate_cache_key(topic, research_findings)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
         prompt = f"""Based on the following research findings:
 {research_findings}
 
@@ -29,10 +38,16 @@ Include:
             {"role": "user", "content": prompt}
         ]
         
-        return await self.llm.chat(messages)
+        response = await self.llm.chat(messages)
+        self.cache[cache_key] = response
+        return response
     
     async def write_section(self, outline: str) -> str:
         """Write a thesis section based on an outline."""
+        cache_key = self._generate_cache_key(outline)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+        
         prompt = f"""Using this outline:
 {outline}
 
@@ -47,10 +62,16 @@ Please write a draft of this thesis section. Focus on:
             {"role": "user", "content": prompt}
         ]
         
-        return await self.llm.chat(messages)
+        response = await self.llm.chat(messages)
+        self.cache[cache_key] = response
+        return response
     
     async def review_and_edit(self, content: str) -> str:
         """Review and edit written content."""
+        cache_key = self._generate_cache_key(content)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+        
         prompt = f"""Please review and improve this academic content:
 {content}
 
@@ -65,4 +86,6 @@ Focus on:
             {"role": "user", "content": prompt}
         ]
         
-        return await self.llm.chat(messages) 
+        response = await self.llm.chat(messages)
+        self.cache[cache_key] = response
+        return response
