@@ -1,6 +1,7 @@
 import os
 import json
-from typing import Dict, List, Optional
+# from typing import Dict, List, Optional
+from typing import Dict, List, Optional, AsyncGenerator
 
 import google.generativeai as genai
 from velocityai.llms.base import BaseLLM
@@ -78,6 +79,19 @@ class GeminiLLM(BaseLLM):
                 continue
                 
         return response.text
+
+    async def stream_generate_content(self, prompt: str) -> AsyncGenerator[str, None]:
+        """Stream generate content for the given prompt."""
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.config.model_name}:streamGenerateContent?alt=sse&key={os.getenv('GEMINI_API_KEY')}"
+        headers = {'Content-Type': 'application/json'}
+        data = json.dumps({"contents": [{"parts": [{"text": prompt}]}]})
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, data=data) as response:
+                async for line in response.content:
+                    if line:
+                        chunk = json.loads(line.decode('utf-8'))
+                        yield chunk['candidates'][0]['content']['parts'][0]['text']
 
     def _parse_json_response(self, text: str) -> Dict:
         """Parse JSON response from the model."""

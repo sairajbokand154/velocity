@@ -17,30 +17,44 @@ async def main():
     
     # Research phase
     print("\n=== Research Phase ===")
-    research_findings_task = asyncio.create_task(researcher.research_topic(topic))
-    research_findings = await research_findings_task
+    research_findings = ""
+    async for chunk in researcher.research_topic(topic):
+        research_findings += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nInitial Research Findings:")
     print(research_findings)
     
-    analysis_task = asyncio.create_task(researcher.analyze_findings(research_findings))
-    analysis = await analysis_task
+    analysis = ""
+    async for chunk in researcher.analyze_findings(research_findings):
+        analysis += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nResearch Analysis:")
     print(analysis)
     
     # Writing phase
     print("\n=== Writing Phase ===")
-    outline_task = asyncio.create_task(writer.outline_section(topic, research_findings))
-    outline = await outline_task
+    outline = ""
+    async for chunk in writer.outline_section(topic, research_findings):
+        outline += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nSection Outline:")
     print(outline)
     
-    draft_task = asyncio.create_task(writer.write_section(outline))
-    draft = await draft_task
+    draft = ""
+    async for chunk in writer.write_section(outline):
+        draft += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nFirst Draft:")
     print(draft)
+    edited = ""
+    async for chunk in writer.review_and_edit(draft):
+        edited += chunk
+        print(chunk, end="", flush=True)
     
-    edited_task = asyncio.create_task(writer.review_and_edit(draft))
-    edited = await edited_task  
     print("\nEdited Version:")
     print(edited)
 

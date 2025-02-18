@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 project_root = str(Path(__file__).parent.parent.parent)
 if project_root not in os.environ.get("PYTHONPATH", "").split(os.pathsep):
     os.environ["PYTHONPATH"] = os.pathsep.join([project_root, os.environ.get("PYTHONPATH", "")])
+    import sys
+    sys.path.append(project_root)
 
 from velocityai.llms.gemini import GeminiLLM
 from agents.researcher import ResearchAgent
@@ -35,33 +37,44 @@ async def main():
     
     # Research phase
     print("\n=== Research Phase ===")
-    research_findings_task = asyncio.create_task(researcher.research_topic(topic))
-    research_findings = await research_findings_task
+    research_findings = ""
+    async for chunk in researcher.research_topic(topic):
+        research_findings += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nInitial Research Findings:")
     print(research_findings)
+    analysis = ""
+    async for chunk in researcher.analyze_findings(research_findings):
+        analysis += chunk
+        print(chunk, end="", flush=True)
     
-    analysis_task = asyncio.create_task(researcher.analyze_findings(research_findings))
-    analysis = await analysis_task
     print("\nResearch Analysis:")
     print(analysis)
     
     # Writing phase
     print("\n=== Writing Phase ===")
-    outline_task = asyncio.create_task(writer.outline_section(topic, research_findings))
-    outline = await outline_task
+    outline = ""
+    async for chunk in writer.outline_section(topic, research_findings):
+        outline += chunk
+        print(chunk, end="", flush=True)
+    
     print("\nSection Outline:")
     print(outline)
+    draft = ""
+    async for chunk in writer.write_section(outline):
+        draft += chunk
+        print(chunk, end="", flush=True)
     
-    draft_task = asyncio.create_task(writer.write_section(outline))
-    draft = await draft_task
     print("\nFirst Draft:")
     print(draft)
+    edited = ""
+    async for chunk in writer.review_and_edit(draft):
+        edited += chunk
+        print(chunk, end="", flush=True)
     
-    edited_task = asyncio.create_task(writer.review_and_edit(draft))
-    edited = await edited_task
     print("\nEdited Version:")
     print(edited)
 
 if __name__ == "__main__":
     asyncio.run(main())
-    

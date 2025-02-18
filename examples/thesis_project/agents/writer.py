@@ -57,14 +57,9 @@ Please write a draft of this thesis section. Focus on:
 3. Proper paragraph structure
 4. Integration of research findings"""
         
-        messages = [
-            {"role": "system", "content": self.llm.get_system_prompt("Academic Writer")},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = await self.llm.chat(messages)
-        self.cache[cache_key] = response
-        return response
+        async for response in self.llm.stream_generate_content(prompt):
+            self.cache[cache_key] = response
+            return response
     
     async def review_and_edit(self, content: str) -> str:
         """Review and edit written content."""
@@ -81,11 +76,6 @@ Focus on:
 3. Grammar and style
 4. Suggestions for improvement"""
         
-        messages = [
-            {"role": "system", "content": self.llm.get_system_prompt("Editor")},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = await self.llm.chat(messages)
-        self.cache[cache_key] = response
-        return response
+        async for response in self.llm.stream_generate_content(prompt):
+            self.cache[cache_key] = response
+            return response

@@ -35,14 +35,9 @@ Please provide:
 
 Structure your response clearly and concisely."""
         
-        messages = [
-            {"role": "system", "content": self.llm.get_system_prompt("Research Assistant")},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = await self.llm.chat(messages)
-        self.cache[cache_key] = response
-        return response
+        async for response in self.llm.stream_generate_content(prompt):
+            self.cache[cache_key] = response
+            return response
     
     async def analyze_findings(self, findings: str) -> str:
         """Analyze research findings and provide insights."""
@@ -59,11 +54,6 @@ Provide:
 3. Areas needing further investigation
 4. Potential implications"""
         
-        messages = [
-            {"role": "system", "content": self.llm.get_system_prompt("Research Analyst")},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = await self.llm.chat(messages)
-        self.cache[cache_key] = response
-        return response
+        async for response in self.llm.stream_generate_content(prompt):
+            self.cache[cache_key] = response
+            return response
